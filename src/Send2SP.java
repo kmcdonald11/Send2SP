@@ -1,7 +1,7 @@
 /**
  * Send2SP - Upload your work to sketchpad.cc
  *
- * ##copyright##
+ * (c) 2011
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,14 +18,20 @@
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
  * 
- * @author		##author##
- * @modified	##date##
- * @version		##version##
+ * @author		Kaitlyn McDonald http://yoururl.com
+ * @modified	11/21/2011
+ * @version		0.1
  */
 
  package template.tool;
  
 import java.awt.*;
+import java.io.*;
+import java.net.*;
+
+import org.json.*;
+import org.codehaus.jackson.*;
+
 import javax.swing.*;
 import processing.app.*;
 import processing.app.tools.*;
@@ -56,7 +62,7 @@ import processing.app.tools.*;
 	    	
 	    	Object[] loginOptions = { "Sign in", "Cancel" };
 	    	
-	    	JLabel usrTxt = new JLabel("Username:");
+	    	JLabel usrTxt = new JLabel("Email:");
 	    	TextField usr = new TextField("", 20);
 	    	JLabel pwdTxt = new JLabel("Password:");
 	    	JPasswordField pwd = new JPasswordField("", 20);
@@ -67,18 +73,57 @@ import processing.app.tools.*;
 	    	panel.add(pwdTxt); panel.add(pwd);
 	    	
 	    	int login = JOptionPane.showOptionDialog(editor, panel, "Sign in using your sketchpad.cc account",
-	    			JOptionPane.OK_CANCEL_OPTION,JOptionPane.QUESTION_MESSAGE, null, loginOptions, loginOptions[0]);
+	    		JOptionPane.OK_CANCEL_OPTION,JOptionPane.QUESTION_MESSAGE, null, loginOptions, loginOptions[0]);
 	    	
 		    // Validate login credentials
 	    	if (login == JOptionPane.OK_OPTION){
 	    		
-	    		// No API functionality yet - that's 0.3 release
-	    		// Just standard checks
-	    		// For testing purposes, type username as "username" and 
-	    		// password as "password" to get into this function   	      
-	    	      
-	    		if((usr.getText().equals("username") && new String(pwd.getPassword()).equals("password"))){
+	    		if((usr.getText().equals("email") && new String(pwd.getPassword()).equals("password"))){
 	    			JOptionPane.showMessageDialog(editor, "Success! You typed the right password.");
+	    			
+	    			// This following section is split into two for now - since there are currently 2 URLs
+	    			// This is being updated from server side
+					/*try { 		    			
+		    			// JSON user object
+		    			JSONObject jsonUsr = new JSONObject();
+		    			jsonUsr.put("email", usr.getText());
+		    			jsonUsr.put("password", new String(pwd.getPassword()));
+		    			String jUsrStr = jsonUsr.toString(); 
+
+		    			// JSON sketch
+		    			JSONObject jsonSketch = new JSONObject();
+		    		    String selection = editor.getSelectedText();
+		    		    char[] stuff = selection.toCharArray();
+		    		    jsonSketch.put("sketch", stuff);
+		    			String jSketchStr = jsonSketch.toString();		    			
+		    			
+						// Connection info
+		    			URL url;
+						url = new URL("http://studio.sketchpad.cc/sp/account/sign-in");
+		    			URLConnection connection = url.openConnection();
+		    			connection.setDoInput(true);  
+		    			connection.setDoOutput(true); 
+		    			//connection.setRequestProperty("Content-Type", "application/json");
+		    			OutputStreamWriter wr = new OutputStreamWriter (connection.getOutputStream ());
+		    	        wr.write(jUsrStr);
+		    	        wr.flush();
+		    	        wr.close();
+		    	        
+					    // Get response data
+					    DataInputStream input;
+					    input = new DataInputStream (urlConn.getInputStream ());
+					    String str;
+					    while (null != ((str = input.readLine()))){
+						    System.out.println (str);
+						    editor.setSelectedText(str + "\n");
+					    }
+					    input.close ();
+			    		
+		    			
+					} catch (Exception e) {
+					}
+	    			*/
+
 	    		}
 	    		else{
 	    			JOptionPane.showMessageDialog(editor, "Your username and/or password did not match our records. Please try again.", "Nay", JOptionPane.WARNING_MESSAGE);
