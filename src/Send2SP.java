@@ -1,7 +1,7 @@
 /**
  * Send2SP - Upload your work to sketchpad.cc
  *
- * (c) 2011
+ * ##copyright##
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,9 +18,9 @@
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
  * 
- * @author		Kaitlyn McDonald http://yoururl.com
- * @modified	11/21/2011
- * @version		0.1
+ * @author		##author##
+ * @modified	##date##
+ * @version		##version##
  */
 
  package template.tool;
@@ -29,13 +29,12 @@ import java.awt.*;
 import java.io.*;
 import java.net.*;
 
-import org.json.*;
-import org.codehaus.jackson.*;
 
 import javax.swing.*;
 import processing.app.*;
 import processing.app.tools.*;
-  
+
+
  
  public class Send2SP implements Tool {
  
@@ -77,79 +76,99 @@ import processing.app.tools.*;
 	    	
 		    // Validate login credentials
 	    	if (login == JOptionPane.OK_OPTION){
-	    		
-	    		if((usr.getText().equals("email") && new String(pwd.getPassword()).equals("password"))){
-	    			JOptionPane.showMessageDialog(editor, "Success! You typed the right password.");
-	    			
-	    			// This following section is split into two for now - since there are currently 2 URLs
-	    			// This is being updated from server side
-					/*try { 		    			
-		    			// JSON user object
-		    			JSONObject jsonUsr = new JSONObject();
-		    			jsonUsr.put("email", usr.getText());
-		    			jsonUsr.put("password", new String(pwd.getPassword()));
-		    			String jUsrStr = jsonUsr.toString(); 
 
-		    			// JSON sketch
-		    			JSONObject jsonSketch = new JSONObject();
-		    		    String selection = editor.getSelectedText();
-		    		    char[] stuff = selection.toCharArray();
-		    		    jsonSketch.put("sketch", stuff);
-		    			String jSketchStr = jsonSketch.toString();		    			
+					try { 		    			
 		    			
-						// Connection info
-		    			URL url;
-						url = new URL("http://studio.sketchpad.cc/sp/account/sign-in");
-		    			URLConnection connection = url.openConnection();
-		    			connection.setDoInput(true);  
-		    			connection.setDoOutput(true); 
-		    			//connection.setRequestProperty("Content-Type", "application/json");
-		    			OutputStreamWriter wr = new OutputStreamWriter (connection.getOutputStream ());
-		    	        wr.write(jUsrStr);
-		    	        wr.flush();
-		    	        wr.close();
+		    			String user = usr.getText();
+		    			String pass = new String(pwd.getPassword());
+		    			
+		    			URL URLObj = null;
+		    			URLConnection connect = null;
+		    			String cookie = "";
+		    			
+		    	        try {
+		    	        	// Establish a URL and open a connection to it. Set it to output mode.
+		    	        	URLObj = new URL("http://studio.sketchpad.cc/sp/account/sign-in");
+		    	        	connect = URLObj.openConnection();
+		    	        	connect.setDoOutput(true); 
+		    	        }
+		    	        catch (MalformedURLException ex) {
+		    	        	System.out.println("The URL specified was unable to be parsed or uses an invalid protocol. Please try again.");
+		    	        	System.exit(1);
+		    	        }
+		    	        catch (Exception ex) {
+		    	        	System.out.println("An exception occurred. " + ex.getMessage());
+		    	        	System.exit(1);
+		    	        }
+		    	         
 		    	        
-					    // Get response data
-					    DataInputStream input;
-					    input = new DataInputStream (urlConn.getInputStream ());
-					    String str;
-					    while (null != ((str = input.readLine()))){
-						    System.out.println (str);
-						    editor.setSelectedText(str + "\n");
-					    }
-					    input.close ();
-			    		
-		    			
-					} catch (Exception e) {
+		    	        String headerName=null;
+		    			for (int i=1; (headerName = connect.getHeaderFieldKey(i))!=null; i++) {
+		    			 	if (headerName.equals("Set-Cookie"))              
+		    			 		cookie = connect.getHeaderField(i);  
+		    			 		//editor.setSelectedText("Cookie!");
+		    			 }
+		    			 	
+	    				cookie = cookie.substring(0, cookie.indexOf(";"));
+	    		        String cookieName = cookie.substring(0, cookie.indexOf("="));
+	    		        String cookieValue = cookie.substring(cookie.indexOf("=") + 1, cookie.length());
+	    		        
+	    		        //cookie name (cookieName) and the cookie value (cookieValue)
+					    //editor.setSelectedText("Cookie name: " + cookieName + "\nCookie value: " + cookieValue);
+	    		        
+					    // We can't just write to the connection again. We need to remake it, and 
+					    // give the cookie values from above
+		    	        try {
+		    	        	// Establish a URL and open a connection to it. Set it to output mode.
+		    	        	URLObj = new URL("http://studio.sketchpad.cc/sp/account/sign-in");
+		    	        	connect = URLObj.openConnection();
+		    	        	editor.setSelectedText("Set cookie: " + cookieName + "=" + cookieValue + "\n"); 
+			    			connect.setRequestProperty("Cookie", cookieName + "=" + cookieValue);
+		    	        	connect.setDoOutput(true); 
+		    	        	connect.connect();
+		    	        	
+		    	        	editor.setSelectedText("Get cookie: " + connect.getRequestProperty("Cookie") + "\n"); 
+		    	        }
+		    	        catch (MalformedURLException ex) {
+		    	        	System.out.println("The URL specified was unable to be parsed or uses an invalid protocol. Please try again.");
+		    	        	System.exit(1);
+		    	        }
+		    	        catch (Exception ex) {
+		    	        	System.out.println("An exception occurred. " + ex.getMessage());
+		    	        	System.exit(1);
+		    	        }	
+					    
+		    	        try {
+		    	        	// Create a buffered writer to the URLConnection's output stream and write our forms parameters.
+		    	        	BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connect.getOutputStream()));
+		    	        	writer.write("email=" + user + "&password=" + pass);
+		    	        	writer.close();
+		    	        	// Now establish a buffered reader to read the URLConnection's input stream.
+		    	        	BufferedReader reader = new BufferedReader(new InputStreamReader(connect.getInputStream()));
+		    	        	String lineRead = "";
+		    	        	 // Read all available lines of data from the URL and print them to screen.
+		    	        	while ((lineRead = reader.readLine()) != null) {
+		    	        		System.out.println(lineRead);
+		    	        	}
+		    	        	reader.close();
+		    	        }
+		    	        catch (Exception ex) {
+		    	        	System.out.println("There was an error reading or writing to the URL: " + ex.getMessage());
+		    	        }
+					    
 					}
-	    			*/
+					catch (Exception e) {
+						e.printStackTrace(); 
+					}
+	    			
 
-	    		}
-	    		else{
-	    			JOptionPane.showMessageDialog(editor, "Your username and/or password did not match our records. Please try again.", "Nay", JOptionPane.WARNING_MESSAGE);
-	    		}
 	    	}
 	    	
 	    	
 	    	
 	    }
 	}
-	
-	/*  Bit of logic to implement later for password validation
-        boolean isCorrect = true;
-        char[] correctPassword = { 'p', 'a', 's', 's', 'w', 'o', 'r', 'd' };
- 
-        if (input.length != correctPassword.length) {
-            isCorrect = false;
-        } else {
-            isCorrect = Arrays.equals (input, correctPassword);
-        }
- 
-        // Reset the correct password
-        Arrays.fill(correctPassword,'0');
- 
-        return isCorrect;
-    }*/
+
  
  }
 
